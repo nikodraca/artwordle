@@ -1,4 +1,7 @@
 import { RGB } from "konva/lib/types";
+import ColorThief from 'colorthief'
+
+const colorThief = new ColorThief();
 
 /**
  * Return proximity between two colours based on RGB values
@@ -64,3 +67,16 @@ export const closestEmoji = (color: RGB): string => {
 
     return ""
 }
+
+export const getColor = (path: string) =>
+    new Promise((resolve, reject) => {
+        const smImage = new Image();
+        smImage.onload = () => {
+            const result = colorThief.getColor(smImage, 1);
+
+            resolve({ path, status: 'ok', result })
+        }
+        smImage.onerror = () => reject({ path, status: 'error' })
+        smImage.src = path;
+    });
+

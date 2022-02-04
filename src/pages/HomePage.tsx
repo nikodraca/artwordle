@@ -1,19 +1,73 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Stage, Layer, Image as KImage } from 'react-konva';
 import { chunk, fill } from 'lodash'
-import ColorThief from 'colorthief'
+import styled from 'styled-components';
+import { ArrowUpRight } from 'react-feather';
 
-import { closestEmoji } from '../utils/color';
+import { closestEmoji, getColor } from '../utils/color';
+
+const Container = styled.div`
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  overflow: hidden;
+  background-color: #f8f6f5;
+`
+
+const Sidebar = styled.div`
+  height: 90%;
+  position: absolute;
+  z-index: 2;
+  background-color: #f4f2ed;
+  margin: 5%;
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+  padding: 1%;
+  border-top-left-radius: 75px;
+  color: #333032;
+  justify-content: space-around;
+  align-items: center;
+`
+
+const SidebarHeader = styled.h2`
+  font-family: 'Open Sans', sans-serif;
+  font-size: 50px;
+  text-align: center;
+  line-height: 1;
+  font-weight: 800;
+  text-transform: uppercase;
+`
+
+const Button = styled.button`
+  font-family: 'Open Sans', sans-serif;
+  font-size: 20px;
+  font-weight: 400;
+  text-transform: uppercase;
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  width: 120px;
+  justify-content: space-around;
+  border: 1px solid #333032;
+  color: #333032;
+
+  :hover {
+    background-color: #333032;
+    color: white;
+  }
+`
 
 export const HomePage = () => {
   const [image, setImage] = useState<HTMLImageElement>();
   const [imageDimmensions, setImageDimmensions] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
 
   const refsArray = useRef({})
-
   const [res, setRes] = useState(fill(Array(5), fill(Array(5), "")))
-
-  const colorThief = new ColorThief();
 
   const handleChangeImage = (evt: any) => {
     const reader = new FileReader();
@@ -36,18 +90,6 @@ export const HomePage = () => {
     reader.readAsDataURL(file);
   };
 
-  const promiseImage = (path: string) =>
-    new Promise((resolve, reject) => {
-      const smImage = new Image();
-      smImage.onload = () => {
-        const result = colorThief.getColor(smImage, 10);
-
-        resolve({ path, status: 'ok', result })
-      }
-      smImage.onerror = () => reject({ path, status: 'error' })
-      smImage.src = path;
-    });
-
 
   const getResults = async () => {
     let allUrls: string[] = []
@@ -63,7 +105,7 @@ export const HomePage = () => {
 
     }
 
-    const x = await Promise.all(allUrls.map(promiseImage))
+    const x = await Promise.all(allUrls.map(getColor))
     const colors = x.map(({ result }: any) => {
       const [r, g, b] = result
       return closestEmoji({ r, g, b })
@@ -72,12 +114,30 @@ export const HomePage = () => {
   }
 
 
-  return <>
-    <input type="file" name="file" id="file" onChange={handleChangeImage} required accept="image/png, image/jpeg" />
+  return <Container>
+    <Sidebar>
+      <SidebarHeader>Artwordle</SidebarHeader>
+      <input type="file" name="file" id="file" onChange={handleChangeImage} required accept="image/png, image/jpeg" />
+
+      <Button onClick={getResults}>
+        Go{' '}<ArrowUpRight size={30} />
+      </Button>
+
+      <div style={{ display: 'flex', flexDirection: 'row' }}>
+        {res.map((r, i) =>
+          <div style={{ display: 'flex', flexDirection: 'column', margin: '5px' }}>
+            {r.map((j, jx) => {
+              return <div style={{ width: 10, height: 10, margin: '5px' }}>{j}</div>
+            })}
+          </div>
+        )}
+      </div>
+
+    </Sidebar>
 
     <Stage
-      width={window.innerWidth / 1.5}
-      height={window.innerHeight / 1.5}
+      width={window.innerWidth}
+      height={window.innerHeight}
     >
       <Layer>
         {res.map((refArray, x) => refArray.map((r, y) =>
@@ -87,10 +147,10 @@ export const HomePage = () => {
               (refsArray.current as any)[`${x}:${y}`] = el
             }}
             image={image}
-            width={50}
-            height={50}
-            x={x * 100}
-            y={y * 100}
+            width={500}
+            height={500}
+            x={x * 500}
+            y={y * 500}
             crop={{
               x: x * (imageDimmensions.width / 5),
               y: y * (imageDimmensions.height / 5),
@@ -101,17 +161,5 @@ export const HomePage = () => {
         )}
       </Layer>
     </Stage>
-
-    <button onClick={getResults} >Go</button>
-
-    <div style={{ display: 'flex', flexDirection: 'row' }}>
-      {res.map((r, i) =>
-        <div style={{ display: 'flex', flexDirection: 'column', margin: '5px' }}>
-          {r.map((j, jx) => {
-            return <div style={{ width: 10, height: 10, margin: '5px' }}>{j}</div>
-          })}
-        </div>
-      )}
-    </div>
-  </>
+  </Container>
 }
