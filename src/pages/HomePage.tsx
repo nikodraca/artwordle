@@ -2,9 +2,12 @@ import { useRef, useState } from 'react';
 import { Stage, Layer, Image as KImage } from 'react-konva';
 import { chunk, fill } from 'lodash'
 import styled from 'styled-components';
-import { ArrowUpRight } from 'react-feather';
+import { ArrowUpRight, Twitter } from 'react-feather';
+import { TwitterShareButton } from 'react-share';
+
 
 import { closestEmoji, getColor } from '../utils/color';
+import { searchAlbum } from '../utils/album';
 
 const Container = styled.div`
   height: 100%;
@@ -41,7 +44,7 @@ const SidebarHeader = styled.h2`
   text-transform: uppercase;
 `
 
-const Button = styled.button`
+const ButtonCSS = `  
   font-family: 'Open Sans', sans-serif;
   font-size: 20px;
   font-weight: 400;
@@ -55,6 +58,7 @@ const Button = styled.button`
   justify-content: space-around;
   border: 1px solid #333032;
   color: #333032;
+  cursor: crosshair;
 
   :hover {
     background-color: #333032;
@@ -62,12 +66,31 @@ const Button = styled.button`
   }
 `
 
+const Button = styled.button`
+  ${ButtonCSS}
+`
+
+const StyledTwitterShareButton = styled(TwitterShareButton)`
+  ${ButtonCSS}
+`;
+
+const Textarea = styled.textarea`
+  width: 200px;
+  height: 200px;
+  text-align: center;
+  resize: none;
+  vertical-align: middle;
+`
+
+
 export const HomePage = () => {
   const [image, setImage] = useState<HTMLImageElement>();
   const [imageDimmensions, setImageDimmensions] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
+  const [res, setRes] = useState(fill(Array(5), fill(Array(5), "")))
+  const [isLoading, setIsLoading] = useState(false)
+  const [albumSearchQuery, setAlbumSearchQuery] = useState('')
 
   const refsArray = useRef({})
-  const [res, setRes] = useState(fill(Array(5), fill(Array(5), "")))
 
   const handleChangeImage = (evt: any) => {
     const reader = new FileReader();
@@ -92,46 +115,73 @@ export const HomePage = () => {
 
 
   const getResults = async () => {
-    let allUrls: string[] = []
+    if (image) {
+      setIsLoading(true)
+      let allUrls: string[] = []
 
-    for (const refArray of chunk(Object.values(refsArray.current), 5)) {
+      for (const refArray of chunk(Object.values(refsArray.current), 5)) {
 
-      const urls: string[] = refArray.map((ref: any, j: number) => {
-        return ref.toDataURL()
+        const urls: string[] = refArray.map((ref: any, j: number) => {
+          return ref.toDataURL()
 
+        })
+
+        allUrls = [...allUrls, ...urls]
+
+      }
+
+      const x = await Promise.all(allUrls.map(getColor))
+      const colors = x.map(({ result }: any) => {
+        const [r, g, b] = result
+        return closestEmoji({ r, g, b })
       })
-
-      allUrls = [...allUrls, ...urls]
-
+      setRes(chunk(colors, 5))
+      setIsLoading(false)
     }
-
-    const x = await Promise.all(allUrls.map(getColor))
-    const colors = x.map(({ result }: any) => {
-      const [r, g, b] = result
-      return closestEmoji({ r, g, b })
-    })
-    setRes(chunk(colors, 5))
   }
 
+  const formatResponseToText = () => {
+    let text = `Starboy - The Weeknd\n\n`
+
+    res.forEach(row => {
+      text += row.join(' ')
+      text += '\n'
+    })
+
+    text += '\n'
+
+    return text.trim().length > 0 ? text : null
+  }
+
+  const textResponse = formatResponseToText()
 
   return <Container>
     <Sidebar>
       <SidebarHeader>Artwordle</SidebarHeader>
-      <input type="file" name="file" id="file" onChange={handleChangeImage} required accept="image/png, image/jpeg" />
+      {/* <input type="file" name="file" id="file" onChange={handleChangeImage} required accept="image/png, image/jpeg" /> */}
+      <input type="text" onChange={(e) => { setAlbumSearchQuery(e.target.value) }} />
+      <Button onClick={() => { searchAlbum(albumSearchQuery) }} >Search</Button>
 
-      <Button onClick={getResults}>
-        Go{' '}<ArrowUpRight size={30} />
+      <Button onClick={getResults} disabled={isLoading}>
+        {isLoading ? 'Loading' : 'Go'}{' '}<ArrowUpRight size={30} />
       </Button>
 
-      <div style={{ display: 'flex', flexDirection: 'row' }}>
-        {res.map((r, i) =>
-          <div style={{ display: 'flex', flexDirection: 'column', margin: '5px' }}>
-            {r.map((j, jx) => {
-              return <div style={{ width: 10, height: 10, margin: '5px' }}>{j}</div>
-            })}
-          </div>
-        )}
-      </div>
+      {
+        textResponse &&
+        <>
+          <Textarea value={textResponse} />
+
+          <StyledTwitterShareButton
+            url={"http:share.com"}
+            title={textResponse}
+            resetButtonStyle={false}
+          >
+            Share <Twitter />
+          </StyledTwitterShareButton>
+
+        </>
+      }
+
 
     </Sidebar>
 
