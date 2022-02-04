@@ -1,6 +1,6 @@
-# boilerplate-react
+# wordle-artwork
 
-CRA with some standard packages I use
+Album artwork -> Wordle artwork
 
 ## Available Scripts
 
