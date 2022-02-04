@@ -1,10 +1,9 @@
 import { useRef, useState } from 'react';
 import { Stage, Layer, Image as KImage } from 'react-konva';
-import { chunk, fill } from 'lodash'
+import { chunk, fill } from 'lodash';
 import styled from 'styled-components';
 import { ArrowUpRight, Twitter } from 'react-feather';
 import { TwitterShareButton } from 'react-share';
-
 
 import { closestEmoji, getColor } from '../utils/color';
 import { searchAlbum } from '../utils/album';
@@ -17,7 +16,7 @@ const Container = styled.div`
   align-items: center;
   overflow: hidden;
   background-color: #f8f6f5;
-`
+`;
 
 const Sidebar = styled.div`
   height: 90%;
@@ -33,7 +32,7 @@ const Sidebar = styled.div`
   color: #333032;
   justify-content: space-around;
   align-items: center;
-`
+`;
 
 const SidebarHeader = styled.h2`
   font-family: 'Open Sans', sans-serif;
@@ -42,7 +41,7 @@ const SidebarHeader = styled.h2`
   line-height: 1;
   font-weight: 800;
   text-transform: uppercase;
-`
+`;
 
 const ButtonCSS = `  
   font-family: 'Open Sans', sans-serif;
@@ -64,11 +63,11 @@ const ButtonCSS = `
     background-color: #333032;
     color: white;
   }
-`
+`;
 
 const Button = styled.button`
   ${ButtonCSS}
-`
+`;
 
 const StyledTwitterShareButton = styled(TwitterShareButton)`
   ${ButtonCSS}
@@ -80,17 +79,19 @@ const Textarea = styled.textarea`
   text-align: center;
   resize: none;
   vertical-align: middle;
-`
-
+`;
 
 export const HomePage = () => {
   const [image, setImage] = useState<HTMLImageElement>();
-  const [imageDimmensions, setImageDimmensions] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
-  const [res, setRes] = useState(fill(Array(5), fill(Array(5), "")))
-  const [isLoading, setIsLoading] = useState(false)
-  const [albumSearchQuery, setAlbumSearchQuery] = useState('')
+  const [imageDimmensions, setImageDimmensions] = useState<{ width: number; height: number }>({
+    width: 0,
+    height: 0
+  });
+  const [res, setRes] = useState(fill(Array(5), fill(Array(5), '')));
+  const [isLoading, setIsLoading] = useState(false);
+  const [albumSearchQuery, setAlbumSearchQuery] = useState('');
 
-  const refsArray = useRef({})
+  const refsArray = useRef({});
 
   const handleChangeImage = (evt: any) => {
     const reader = new FileReader();
@@ -104,7 +105,7 @@ export const HomePage = () => {
         setImageDimmensions({
           width,
           height
-        })
+        });
       };
 
       image.src = upload.target?.result as string;
@@ -113,103 +114,107 @@ export const HomePage = () => {
     reader.readAsDataURL(file);
   };
 
-
   const getResults = async () => {
     if (image) {
-      setIsLoading(true)
-      let allUrls: string[] = []
+      setIsLoading(true);
+      let allUrls: string[] = [];
 
       for (const refArray of chunk(Object.values(refsArray.current), 5)) {
-
         const urls: string[] = refArray.map((ref: any, j: number) => {
-          return ref.toDataURL()
+          return ref.toDataURL();
+        });
 
-        })
-
-        allUrls = [...allUrls, ...urls]
-
+        allUrls = [...allUrls, ...urls];
       }
 
-      const x = await Promise.all(allUrls.map(getColor))
+      const x = await Promise.all(allUrls.map(getColor));
       const colors = x.map(({ result }: any) => {
-        const [r, g, b] = result
-        return closestEmoji({ r, g, b })
-      })
-      setRes(chunk(colors, 5))
-      setIsLoading(false)
+        const [r, g, b] = result;
+        return closestEmoji({ r, g, b });
+      });
+      setRes(chunk(colors, 5));
+      setIsLoading(false);
     }
-  }
+  };
 
   const formatResponseToText = () => {
-    let text = `Starboy - The Weeknd\n\n`
+    let text = `Starboy - The Weeknd\n\n`;
 
-    res.forEach(row => {
-      text += row.join(' ')
-      text += '\n'
-    })
+    res.forEach((row) => {
+      text += row.join(' ');
+      text += '\n';
+    });
 
-    text += '\n'
+    text += '\n';
 
-    return text.trim().length > 0 ? text : null
-  }
+    return text.trim().length > 0 ? text : null;
+  };
 
-  const textResponse = formatResponseToText()
+  const textResponse = formatResponseToText();
 
-  return <Container>
-    <Sidebar>
-      <SidebarHeader>Artwordle</SidebarHeader>
-      {/* <input type="file" name="file" id="file" onChange={handleChangeImage} required accept="image/png, image/jpeg" /> */}
-      <input type="text" onChange={(e) => { setAlbumSearchQuery(e.target.value) }} />
-      <Button onClick={() => { searchAlbum(albumSearchQuery) }} >Search</Button>
+  return (
+    <Container>
+      <Sidebar>
+        <SidebarHeader>Artwordle</SidebarHeader>
+        {/* <input type="file" name="file" id="file" onChange={handleChangeImage} required accept="image/png, image/jpeg" /> */}
+        <input
+          type="text"
+          onChange={(e) => {
+            setAlbumSearchQuery(e.target.value);
+          }}
+        />
+        <Button
+          onClick={() => {
+            searchAlbum(albumSearchQuery);
+          }}
+        >
+          Search
+        </Button>
 
-      <Button onClick={getResults} disabled={isLoading}>
-        {isLoading ? 'Loading' : 'Go'}{' '}<ArrowUpRight size={30} />
-      </Button>
+        <Button onClick={getResults} disabled={isLoading}>
+          {isLoading ? 'Loading' : 'Go'} <ArrowUpRight size={30} />
+        </Button>
 
-      {
-        textResponse &&
-        <>
-          <Textarea value={textResponse} />
+        {textResponse && (
+          <>
+            <Textarea value={textResponse} />
 
-          <StyledTwitterShareButton
-            url={"http:share.com"}
-            title={textResponse}
-            resetButtonStyle={false}
-          >
-            Share <Twitter />
-          </StyledTwitterShareButton>
-
-        </>
-      }
-
-
-    </Sidebar>
-
-    <Stage
-      width={window.innerWidth}
-      height={window.innerHeight}
-    >
-      <Layer>
-        {res.map((refArray, x) => refArray.map((r, y) =>
-          <KImage
-            key={`${x}_${y}`}
-            ref={(el) => {
-              (refsArray.current as any)[`${x}:${y}`] = el
-            }}
-            image={image}
-            width={500}
-            height={500}
-            x={x * 500}
-            y={y * 500}
-            crop={{
-              x: x * (imageDimmensions.width / 5),
-              y: y * (imageDimmensions.height / 5),
-              width: imageDimmensions.width / 5,
-              height: imageDimmensions.height / 5,
-            }}
-          />)
+            <StyledTwitterShareButton
+              url={'http:share.com'}
+              title={textResponse}
+              resetButtonStyle={false}
+            >
+              Share <Twitter />
+            </StyledTwitterShareButton>
+          </>
         )}
-      </Layer>
-    </Stage>
-  </Container>
-}
+      </Sidebar>
+
+      <Stage width={window.innerWidth} height={window.innerHeight}>
+        <Layer>
+          {res.map((refArray, x) =>
+            refArray.map((r, y) => (
+              <KImage
+                key={`${x}_${y}`}
+                ref={(el) => {
+                  (refsArray.current as any)[`${x}:${y}`] = el;
+                }}
+                image={image}
+                width={500}
+                height={500}
+                x={x * 500}
+                y={y * 500}
+                crop={{
+                  x: x * (imageDimmensions.width / 5),
+                  y: y * (imageDimmensions.height / 5),
+                  width: imageDimmensions.width / 5,
+                  height: imageDimmensions.height / 5
+                }}
+              />
+            ))
+          )}
+        </Layer>
+      </Stage>
+    </Container>
+  );
+};
