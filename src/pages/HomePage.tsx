@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Image as KImage } from 'react-konva';
 import { chunk, fill, debounce, last } from 'lodash';
-import { ArrowUpRight } from 'react-feather';
 import { Textfit } from 'react-textfit';
 
-import { Container, Sidebar, SidebarHeader, Button, StyledSelect, Results } from '../components';
-import { closestEmoji, getColor } from '../utils/color';
+import { Container, Sidebar, SidebarHeader, StyledSelect, Results } from '../components';
+import { closestEmoji, getColor, colorThief } from '../utils/color';
 import { searchAlbum, formatResponseToText } from '../utils/album';
 import { Album } from '../types';
 import { DEBOUNCE_MS, GRID_SIZE } from '../constants';
@@ -20,8 +19,10 @@ export const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [albums, setAlbums] = useState<Array<Album>>([]);
   const [selectedAlbum, setSelectedAlbum] = useState<Album>();
+  const [palette, setPalette] = useState<Array<Array<number>>>([]);
+  const [isFirstRequest, setIsFirstRequest] = useState(true);
 
-  const refsArray = useRef({});
+  const refsLookup = useRef({});
 
   useEffect(() => {
     if (selectedAlbum) {
@@ -33,6 +34,9 @@ export const HomePage = () => {
           width,
           height
         });
+
+        const bgColor = colorThief.getPalette(image, 3);
+        setPalette(bgColor);
       };
 
       image.setAttribute('crossOrigin', 'anonymous');
@@ -42,10 +46,12 @@ export const HomePage = () => {
 
   const getResults = async () => {
     if (image) {
+      console.log('DRAW');
+
       setIsLoading(true);
       let allUrls: string[] = [];
 
-      for (const refArray of chunk(Object.values(refsArray.current), GRID_SIZE)) {
+      for (const refArray of chunk(Object.values(refsLookup.current), GRID_SIZE)) {
         const urls: string[] = refArray.map((ref: any) => {
           return ref.toDataURL();
         });
@@ -60,8 +66,17 @@ export const HomePage = () => {
       });
       setRes(chunk(colors, GRID_SIZE));
       setIsLoading(false);
+
+      if (isFirstRequest) {
+        setIsFirstRequest(false);
+      }
     }
   };
+
+  useEffect(() => {
+    getResults();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [image, isFirstRequest]);
 
   const _loadSuggestions = async (query: string, callback: Function) => {
     const albumRes = await searchAlbum(query);
@@ -85,25 +100,37 @@ export const HomePage = () => {
         <Textfit>
           <SidebarHeader>Artwordle</SidebarHeader>
         </Textfit>
-        <StyledSelect
-          isClearable
-          loadOptions={loadSuggestions}
-          onChange={(option: any) => {
-            if (option) {
-              const match = albums.find((a) => a.id === option.value);
-              if (match) {
-                setSelectedAlbum(match);
+
+        {isLoading ? (
+          'Loading'
+        ) : (
+          <StyledSelect
+            isClearable
+            loadOptions={loadSuggestions}
+            cacheOptions
+            onChange={(option: any) => {
+              if (option) {
+                const match = albums.find((a) => a.id === option.value);
+                if (match) {
+                  setSelectedAlbum(match);
+                }
               }
-            }
-          }}
-        />
+            }}
+          />
+        )}
 
-        <Button onClick={getResults} disabled={isLoading}>
-          {isLoading ? 'Loading' : 'Go'} <ArrowUpRight size={30} />
-        </Button>
-
-        {textResponse && <Results textResponse={textResponse} />}
+        {textResponse && !isLoading && <Results textResponse={textResponse} />}
       </Sidebar>
+
+      <div
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          zIndex: 1,
+          background: `rgb(${palette[0]}) linear-gradient(90deg, rgba(${palette[0]},1) 0%, rgba(${palette[1]},1) 50%, rgba(${palette[2]},1) 100%)`
+        }}
+      ></div>
 
       <Stage width={window.innerWidth} height={window.innerHeight}>
         <Layer>
@@ -112,13 +139,13 @@ export const HomePage = () => {
               <KImage
                 key={`${x}_${y}`}
                 ref={(el) => {
-                  (refsArray.current as any)[`${x}:${y}`] = el;
+                  (refsLookup.current as any)[`${x}:${y}`] = el;
                 }}
                 image={image}
-                width={200}
-                height={200}
-                x={x * 200}
-                y={y * 200}
+                width={window.innerWidth / GRID_SIZE}
+                height={window.innerHeight / GRID_SIZE}
+                x={x * (window.innerWidth / GRID_SIZE)}
+                y={y * (window.innerHeight / GRID_SIZE)}
                 crop={{
                   x: x * (imageDimmensions.width / GRID_SIZE),
                   y: y * (imageDimmensions.height / GRID_SIZE),

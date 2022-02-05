@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { flatten } from 'lodash';
 import { Album } from '../types';
 
 export const searchAlbum = async (q: string): Promise<Array<Album>> => {
@@ -9,7 +10,9 @@ export const searchAlbum = async (q: string): Promise<Array<Album>> => {
 };
 
 export const formatResponseToText = (res: Array<Array<string>>, selectedAlbum?: Album) => {
-  if (!selectedAlbum) {
+  const isResult = flatten(res).join('').trim().length > 0;
+
+  if (!selectedAlbum || !isResult) {
     return '';
   }
 

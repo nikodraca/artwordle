@@ -6,23 +6,20 @@ export const Container = styled.div`
   height: 100%;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   overflow: hidden;
   background-color: #f8f6f5;
 `;
 
 export const Sidebar = styled.div`
-  height: 90%;
+  height: 80%;
   position: absolute;
   z-index: 2;
   background-color: #f4f2ed;
-  margin: 5%;
-  width: 40%;
+  width: 80%;
   display: flex;
   flex-direction: column;
-  padding: 1%;
-  border-top-left-radius: 75px;
   color: #333032;
   justify-content: space-around;
   align-items: center;
@@ -68,15 +65,17 @@ export const StyledTwitterShareButton = styled(TwitterShareButton)`
 `;
 
 export const Textarea = styled.textarea`
-  width: 200px;
-  height: 200px;
+  width: 250px;
+  height: 180px;
   text-align: center;
   resize: none;
   vertical-align: middle;
+  overflow: hidden;
 `;
 
 export const StyledSelect = styled(AsyncSelect)`
   width: 80%;
+  font-family: 'Open Sans', sans-serif;
 `;
 
 export { Results } from './Results';
