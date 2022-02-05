@@ -12,7 +12,8 @@ import {
   Search,
   P,
   Loader,
-  Intro
+  Intro,
+  Credits
 } from '../components';
 import { closestEmoji, getColor } from '../utils/color';
 import { searchAlbum, formatResponseToText } from '../utils/album';
@@ -101,7 +102,7 @@ export const HomePage = () => {
   const customStyles = {
     control: (provided: any) => ({
       ...provided,
-      width: '100%',
+      width: '200px',
       fontFamily: "'IBM Plex Mono', monospace",
       border: '1px solid black',
       textTransform: 'uppercase'
@@ -109,7 +110,8 @@ export const HomePage = () => {
     option: (provided: any) => ({
       ...provided,
       fontFamily: "'IBM Plex Mono', monospace",
-      textTransform: 'uppercase'
+      textTransform: 'uppercase',
+      width: '200px'
     }),
     noOptionsMessage: (provided: any) => ({
       ...provided,
@@ -139,7 +141,7 @@ export const HomePage = () => {
                 isClearable
                 loadOptions={loadSuggestions}
                 cacheOptions
-                placeholder="Search for album..."
+                placeholder="Search..."
                 styles={customStyles}
                 onChange={(option: any) => {
                   if (option) {
@@ -166,7 +168,7 @@ export const HomePage = () => {
               isClearable
               loadOptions={loadSuggestions}
               cacheOptions
-              placeholder="Search for album..."
+              placeholder="Search..."
               styles={customStyles}
               onChange={(option: any) => {
                 if (option) {
@@ -180,6 +182,8 @@ export const HomePage = () => {
             />
           </Intro>
         )}
+
+        <Credits href="#">NIKODRACA.COM</Credits>
       </Sidebar>
 
       <Stage width={window.innerWidth} height={window.innerHeight}>

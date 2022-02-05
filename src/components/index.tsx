@@ -69,12 +69,12 @@ export const StyledTwitterShareButton = styled(TwitterShareButton)`
   position: absolute;
   bottom: 0;
   right: 0;
-  margin: 50px;
+  margin: 20px;
 `;
 
 export const Textarea = styled.textarea`
   width: 100%;
-  height: 200px;
+  height: 225px;
   text-align: center;
   resize: none;
   vertical-align: middle;
@@ -82,13 +82,17 @@ export const Textarea = styled.textarea`
   border: none;
   font-family: 'IBM Plex Mono', monospace;
   font-size: 20px;
+  outline: none;
+
+  @media (max-width: 768px) {
+    width: 85%;
+  }
 `;
 
 export const Search = styled.div`
   position: fixed;
   top: 0;
   right: 0;
-  width: 25%;
   margin: 20px;
 `;
 
@@ -97,6 +101,10 @@ export const P = styled.p`
   font-size: 15px;
   text-align: center;
   text-transform: uppercase;
+
+  @media (max-width: 768px) {
+    width: 80%;
+  }
 `;
 
 export const Intro = styled.div`
@@ -104,6 +112,18 @@ export const Intro = styled.div`
   flex-direction: column;
   height: 30%;
   justify-content: space-around;
+  align-items: center;
+  width: 100%;
+`;
+
+export const Credits = styled.a`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  font-family: 'IBM Plex Mono', monospace;
+  margin: 20px;
+  color: black;
+  font-size: 15px;
 `;
 
 export { Results } from './Results';
