@@ -71,6 +71,7 @@ export const HomePage = () => {
       setRes(chunk(colors, GRID_SIZE));
       setIsLoading(false);
 
+      // Redraw becuase I can't figure out why the images don't split the first time around
       if (isFirstRequest) {
         setIsFirstRequest(false);
       }
