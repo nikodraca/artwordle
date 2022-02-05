@@ -4,7 +4,16 @@ import { chunk, fill, debounce, last } from 'lodash';
 import { Textfit } from 'react-textfit';
 import AsyncSelect from 'react-select/async';
 
-import { Container, Sidebar, SidebarHeader, Results, Search, P, Loader } from '../components';
+import {
+  Container,
+  Sidebar,
+  SidebarHeader,
+  Results,
+  Search,
+  P,
+  Loader,
+  Intro
+} from '../components';
 import { closestEmoji, getColor } from '../utils/color';
 import { searchAlbum, formatResponseToText } from '../utils/album';
 import { Album } from '../types';
@@ -43,8 +52,6 @@ export const HomePage = () => {
 
   const getResults = async () => {
     if (image) {
-      console.log('DRAW');
-
       setIsLoading(true);
       let allUrls: string[] = [];
 
@@ -107,6 +114,11 @@ export const HomePage = () => {
       ...provided,
       fontFamily: "'IBM Plex Mono', monospace",
       textTransform: 'uppercase'
+    }),
+    loadingMessage: (provided: any) => ({
+      ...provided,
+      fontFamily: "'IBM Plex Mono', monospace",
+      textTransform: 'uppercase'
     })
   };
 
@@ -117,10 +129,38 @@ export const HomePage = () => {
           <SidebarHeader>Artwordle</SidebarHeader>
         </Textfit>
 
-        <Search>
-          {isLoading ? (
-            <Loader />
-          ) : (
+        {textResponse && (
+          <Search>
+            {isLoading ? (
+              <Loader />
+            ) : (
+              <AsyncSelect
+                isClearable
+                loadOptions={loadSuggestions}
+                cacheOptions
+                placeholder="Search for album..."
+                styles={customStyles}
+                onChange={(option: any) => {
+                  if (option) {
+                    const match = albums.find((a) => a.id === option.value);
+                    if (match) {
+                      setSelectedAlbum(match);
+                    }
+                  }
+                }}
+              />
+            )}
+          </Search>
+        )}
+
+        {textResponse && !isLoading && <Results textResponse={textResponse} />}
+        {!textResponse && (
+          <Intro>
+            <P>
+              Turn your favourite album into Wordle artwork
+              <br /> Search for an album to get started
+              <br />
+            </P>
             <AsyncSelect
               isClearable
               loadOptions={loadSuggestions}
@@ -135,18 +175,9 @@ export const HomePage = () => {
                   }
                 }
               }}
+              components={{ LoadingIndicator: Loader }}
             />
-          )}
-        </Search>
-
-        {textResponse && !isLoading && <Results textResponse={textResponse} />}
-        {!textResponse && (
-          <P>
-            Turn your favourite album into Wordle artwork
-            <br /> Search for an album to get started
-            <br />
-            <Loader />
-          </P>
+          </Intro>
         )}
       </Sidebar>
 

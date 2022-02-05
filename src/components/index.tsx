@@ -99,5 +99,12 @@ export const P = styled.p`
   text-transform: uppercase;
 `;
 
+export const Intro = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 30%;
+  justify-content: space-around;
+`;
+
 export { Results } from './Results';
 export { Loader } from './Loader';

@@ -4,8 +4,13 @@ import styled from 'styled-components';
 
 import { emojis } from '../utils/color';
 
-const StyledP = styled.p`
+const StyledDiv = styled.div`
   margin-top: 10px;
+  text-align: center;
+  display: flex;
+  font-size: 10px;
+  margin: 0;
+  margin-right: 5px;
 `;
 
 export const Loader = () => {
@@ -24,5 +29,5 @@ export const Loader = () => {
     };
   }, [emoji]);
 
-  return <StyledP>{emoji}</StyledP>;
+  return <StyledDiv>{emoji}</StyledDiv>;
 };
