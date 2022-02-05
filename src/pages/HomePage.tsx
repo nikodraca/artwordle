@@ -1,85 +1,14 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Image as KImage } from 'react-konva';
-import { chunk, fill } from 'lodash';
-import styled from 'styled-components';
-import { ArrowUpRight, Twitter } from 'react-feather';
-import { TwitterShareButton } from 'react-share';
+import { chunk, fill, debounce, last } from 'lodash';
+import { ArrowUpRight } from 'react-feather';
+import { Textfit } from 'react-textfit';
 
+import { Container, Sidebar, SidebarHeader, Button, StyledSelect, Results } from '../components';
 import { closestEmoji, getColor } from '../utils/color';
-import { searchAlbum } from '../utils/album';
-
-const Container = styled.div`
-  height: 100%;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  overflow: hidden;
-  background-color: #f8f6f5;
-`;
-
-const Sidebar = styled.div`
-  height: 90%;
-  position: absolute;
-  z-index: 2;
-  background-color: #f4f2ed;
-  margin: 5%;
-  width: 40%;
-  display: flex;
-  flex-direction: column;
-  padding: 1%;
-  border-top-left-radius: 75px;
-  color: #333032;
-  justify-content: space-around;
-  align-items: center;
-`;
-
-const SidebarHeader = styled.h2`
-  font-family: 'Open Sans', sans-serif;
-  font-size: 50px;
-  text-align: center;
-  line-height: 1;
-  font-weight: 800;
-  text-transform: uppercase;
-`;
-
-const ButtonCSS = `  
-  font-family: 'Open Sans', sans-serif;
-  font-size: 20px;
-  font-weight: 400;
-  text-transform: uppercase;
-  background: none;
-  border: none;
-  display: flex;
-  align-items: center;
-  height: 40px;
-  width: 120px;
-  justify-content: space-around;
-  border: 1px solid #333032;
-  color: #333032;
-  cursor: crosshair;
-
-  :hover {
-    background-color: #333032;
-    color: white;
-  }
-`;
-
-const Button = styled.button`
-  ${ButtonCSS}
-`;
-
-const StyledTwitterShareButton = styled(TwitterShareButton)`
-  ${ButtonCSS}
-`;
-
-const Textarea = styled.textarea`
-  width: 200px;
-  height: 200px;
-  text-align: center;
-  resize: none;
-  vertical-align: middle;
-`;
+import { searchAlbum, formatResponseToText } from '../utils/album';
+import { Album } from '../types';
+import { DEBOUNCE_MS, GRID_SIZE } from '../constants';
 
 export const HomePage = () => {
   const [image, setImage] = useState<HTMLImageElement>();
@@ -87,17 +16,15 @@ export const HomePage = () => {
     width: 0,
     height: 0
   });
-  const [res, setRes] = useState(fill(Array(5), fill(Array(5), '')));
+  const [res, setRes] = useState(fill(Array(GRID_SIZE), fill(Array(GRID_SIZE), '')));
   const [isLoading, setIsLoading] = useState(false);
-  const [albumSearchQuery, setAlbumSearchQuery] = useState('');
+  const [albums, setAlbums] = useState<Array<Album>>([]);
+  const [selectedAlbum, setSelectedAlbum] = useState<Album>();
 
   const refsArray = useRef({});
 
-  const handleChangeImage = (evt: any) => {
-    const reader = new FileReader();
-    const file = evt.target.files[0];
-
-    reader.onload = function (upload) {
+  useEffect(() => {
+    if (selectedAlbum) {
       const image = new Image();
       image.onload = () => {
         setImage(image);
@@ -108,19 +35,18 @@ export const HomePage = () => {
         });
       };
 
-      image.src = upload.target?.result as string;
-    };
-
-    reader.readAsDataURL(file);
-  };
+      image.setAttribute('crossOrigin', 'anonymous');
+      image.src = last(selectedAlbum.images)?.url || '#';
+    }
+  }, [selectedAlbum]);
 
   const getResults = async () => {
     if (image) {
       setIsLoading(true);
       let allUrls: string[] = [];
 
-      for (const refArray of chunk(Object.values(refsArray.current), 5)) {
-        const urls: string[] = refArray.map((ref: any, j: number) => {
+      for (const refArray of chunk(Object.values(refsArray.current), GRID_SIZE)) {
+        const urls: string[] = refArray.map((ref: any) => {
           return ref.toDataURL();
         });
 
@@ -132,62 +58,51 @@ export const HomePage = () => {
         const [r, g, b] = result;
         return closestEmoji({ r, g, b });
       });
-      setRes(chunk(colors, 5));
+      setRes(chunk(colors, GRID_SIZE));
       setIsLoading(false);
     }
   };
 
-  const formatResponseToText = () => {
-    let text = `Starboy - The Weeknd\n\n`;
+  const _loadSuggestions = async (query: string, callback: Function) => {
+    const albumRes = await searchAlbum(query);
+    setAlbums(albumRes);
 
-    res.forEach((row) => {
-      text += row.join(' ');
-      text += '\n';
-    });
+    const options = albumRes.map(({ id, name, artists }) => ({
+      value: id,
+      label: `${name} - ${artists[0].name}`
+    }));
 
-    text += '\n';
-
-    return text.trim().length > 0 ? text : null;
+    callback(options);
   };
 
-  const textResponse = formatResponseToText();
+  const loadSuggestions = debounce(_loadSuggestions, DEBOUNCE_MS);
+
+  const textResponse = formatResponseToText(res, selectedAlbum);
 
   return (
     <Container>
       <Sidebar>
-        <SidebarHeader>Artwordle</SidebarHeader>
-        {/* <input type="file" name="file" id="file" onChange={handleChangeImage} required accept="image/png, image/jpeg" /> */}
-        <input
-          type="text"
-          onChange={(e) => {
-            setAlbumSearchQuery(e.target.value);
+        <Textfit>
+          <SidebarHeader>Artwordle</SidebarHeader>
+        </Textfit>
+        <StyledSelect
+          isClearable
+          loadOptions={loadSuggestions}
+          onChange={(option: any) => {
+            if (option) {
+              const match = albums.find((a) => a.id === option.value);
+              if (match) {
+                setSelectedAlbum(match);
+              }
+            }
           }}
         />
-        <Button
-          onClick={() => {
-            searchAlbum(albumSearchQuery);
-          }}
-        >
-          Search
-        </Button>
 
         <Button onClick={getResults} disabled={isLoading}>
           {isLoading ? 'Loading' : 'Go'} <ArrowUpRight size={30} />
         </Button>
 
-        {textResponse && (
-          <>
-            <Textarea value={textResponse} />
-
-            <StyledTwitterShareButton
-              url={'http:share.com'}
-              title={textResponse}
-              resetButtonStyle={false}
-            >
-              Share <Twitter />
-            </StyledTwitterShareButton>
-          </>
-        )}
+        {textResponse && <Results textResponse={textResponse} />}
       </Sidebar>
 
       <Stage width={window.innerWidth} height={window.innerHeight}>
@@ -200,15 +115,15 @@ export const HomePage = () => {
                   (refsArray.current as any)[`${x}:${y}`] = el;
                 }}
                 image={image}
-                width={500}
-                height={500}
-                x={x * 500}
-                y={y * 500}
+                width={200}
+                height={200}
+                x={x * 200}
+                y={y * 200}
                 crop={{
-                  x: x * (imageDimmensions.width / 5),
-                  y: y * (imageDimmensions.height / 5),
-                  width: imageDimmensions.width / 5,
-                  height: imageDimmensions.height / 5
+                  x: x * (imageDimmensions.width / GRID_SIZE),
+                  y: y * (imageDimmensions.height / GRID_SIZE),
+                  width: imageDimmensions.width / GRID_SIZE,
+                  height: imageDimmensions.height / GRID_SIZE
                 }}
               />
             ))
