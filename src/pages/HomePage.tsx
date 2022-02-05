@@ -108,6 +108,7 @@ export const HomePage = () => {
             isClearable
             loadOptions={loadSuggestions}
             cacheOptions
+            placeholder="Search for album..."
             onChange={(option: any) => {
               if (option) {
                 const match = albums.find((a) => a.id === option.value);

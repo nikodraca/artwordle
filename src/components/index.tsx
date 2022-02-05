@@ -74,7 +74,7 @@ export const Textarea = styled.textarea`
 `;
 
 export const StyledSelect = styled(AsyncSelect)`
-  width: 80%;
+  width: 50%;
   font-family: 'Open Sans', sans-serif;
 `;
 
