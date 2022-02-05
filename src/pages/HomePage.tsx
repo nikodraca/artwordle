@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Image as KImage } from 'react-konva';
 import { chunk, fill, debounce, last } from 'lodash';
 import { Textfit } from 'react-textfit';
+import AsyncSelect from 'react-select/async';
 
-import { Container, Sidebar, SidebarHeader, StyledSelect, Results } from '../components';
-import { closestEmoji, getColor, colorThief } from '../utils/color';
+import { Container, Sidebar, SidebarHeader, Results, Search, P, Loader } from '../components';
+import { closestEmoji, getColor } from '../utils/color';
 import { searchAlbum, formatResponseToText } from '../utils/album';
 import { Album } from '../types';
 import { DEBOUNCE_MS, GRID_SIZE } from '../constants';
@@ -19,7 +20,6 @@ export const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [albums, setAlbums] = useState<Array<Album>>([]);
   const [selectedAlbum, setSelectedAlbum] = useState<Album>();
-  const [palette, setPalette] = useState<Array<Array<number>>>([]);
   const [isFirstRequest, setIsFirstRequest] = useState(true);
 
   const refsLookup = useRef({});
@@ -34,9 +34,6 @@ export const HomePage = () => {
           width,
           height
         });
-
-        const bgColor = colorThief.getPalette(image, 3);
-        setPalette(bgColor);
       };
 
       image.setAttribute('crossOrigin', 'anonymous');
@@ -91,8 +88,27 @@ export const HomePage = () => {
   };
 
   const loadSuggestions = debounce(_loadSuggestions, DEBOUNCE_MS);
-
   const textResponse = formatResponseToText(res, selectedAlbum);
+
+  const customStyles = {
+    control: (provided: any) => ({
+      ...provided,
+      width: '100%',
+      fontFamily: "'IBM Plex Mono', monospace",
+      border: '1px solid black',
+      textTransform: 'uppercase'
+    }),
+    option: (provided: any) => ({
+      ...provided,
+      fontFamily: "'IBM Plex Mono', monospace",
+      textTransform: 'uppercase'
+    }),
+    noOptionsMessage: (provided: any) => ({
+      ...provided,
+      fontFamily: "'IBM Plex Mono', monospace",
+      textTransform: 'uppercase'
+    })
+  };
 
   return (
     <Container>
@@ -101,37 +117,38 @@ export const HomePage = () => {
           <SidebarHeader>Artwordle</SidebarHeader>
         </Textfit>
 
-        {isLoading ? (
-          'Loading'
-        ) : (
-          <StyledSelect
-            isClearable
-            loadOptions={loadSuggestions}
-            cacheOptions
-            placeholder="Search for album..."
-            onChange={(option: any) => {
-              if (option) {
-                const match = albums.find((a) => a.id === option.value);
-                if (match) {
-                  setSelectedAlbum(match);
+        <Search>
+          {isLoading ? (
+            <Loader />
+          ) : (
+            <AsyncSelect
+              isClearable
+              loadOptions={loadSuggestions}
+              cacheOptions
+              placeholder="Search for album..."
+              styles={customStyles}
+              onChange={(option: any) => {
+                if (option) {
+                  const match = albums.find((a) => a.id === option.value);
+                  if (match) {
+                    setSelectedAlbum(match);
+                  }
                 }
-              }
-            }}
-          />
-        )}
+              }}
+            />
+          )}
+        </Search>
 
         {textResponse && !isLoading && <Results textResponse={textResponse} />}
+        {!textResponse && (
+          <P>
+            Turn your favourite album into Wordle artwork
+            <br /> Search for an album to get started
+            <br />
+            <Loader />
+          </P>
+        )}
       </Sidebar>
-
-      <div
-        style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          zIndex: 1,
-          background: `rgb(${palette[0]}) linear-gradient(90deg, rgba(${palette[0]},1) 0%, rgba(${palette[1]},1) 50%, rgba(${palette[2]},1) 100%)`
-        }}
-      ></div>
 
       <Stage width={window.innerWidth} height={window.innerHeight}>
         <Layer>
