@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Image as KImage } from 'react-konva';
-import { chunk, fill, debounce, last } from 'lodash';
+import { chunk, fill, last } from 'lodash';
 import { Textfit } from 'react-textfit';
-import AsyncSelect from 'react-select/async';
 
 import {
   Container,
@@ -13,12 +12,13 @@ import {
   P,
   Loader,
   Intro,
-  Credits
+  Credits,
+  AlbumSelect
 } from '../components';
 import { closestEmoji, getColor } from '../utils/color';
-import { searchAlbum, formatResponseToText } from '../utils/album';
+import { formatResponseToText } from '../utils/album';
 import { Album } from '../types';
-import { DEBOUNCE_MS, GRID_SIZE } from '../constants';
+import { GRID_SIZE } from '../constants';
 
 export const HomePage = () => {
   const [image, setImage] = useState<HTMLImageElement>();
@@ -88,46 +88,7 @@ export const HomePage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [image, isFirstRequest]);
 
-  const _loadSuggestions = async (query: string, callback: Function) => {
-    const albumRes = await searchAlbum(query);
-    setAlbums(albumRes);
-
-    const options = albumRes.map(({ id, name, artists }) => ({
-      value: id,
-      label: `${name} - ${artists[0].name}`
-    }));
-
-    callback(options);
-  };
-
-  const loadSuggestions = debounce(_loadSuggestions, DEBOUNCE_MS);
   const textResponse = formatResponseToText(res, selectedAlbum);
-
-  const customStyles = {
-    control: (provided: any) => ({
-      ...provided,
-      width: '200px',
-      fontFamily: "'IBM Plex Mono', monospace",
-      border: '1px solid black',
-      textTransform: 'uppercase'
-    }),
-    option: (provided: any) => ({
-      ...provided,
-      fontFamily: "'IBM Plex Mono', monospace",
-      textTransform: 'uppercase',
-      width: '200px'
-    }),
-    noOptionsMessage: (provided: any) => ({
-      ...provided,
-      fontFamily: "'IBM Plex Mono', monospace",
-      textTransform: 'uppercase'
-    }),
-    loadingMessage: (provided: any) => ({
-      ...provided,
-      fontFamily: "'IBM Plex Mono', monospace",
-      textTransform: 'uppercase'
-    })
-  };
 
   return (
     <Container>
@@ -141,26 +102,16 @@ export const HomePage = () => {
             {isLoading ? (
               <Loader />
             ) : (
-              <AsyncSelect
-                isClearable
-                loadOptions={loadSuggestions}
-                cacheOptions
-                placeholder="Search..."
-                styles={customStyles}
-                onChange={(option: any) => {
-                  if (option) {
-                    const match = albums.find((a) => a.id === option.value);
-                    if (match) {
-                      setSelectedAlbum(match);
-                    }
-                  }
-                }}
+              <AlbumSelect
+                albums={albums}
+                setSelectedAlbum={setSelectedAlbum}
+                setAlbums={setAlbums}
               />
             )}
           </Search>
         )}
 
-        {textResponse && !isLoading && <Results textResponse={textResponse} />}
+        {textResponse && !isLoading && !isFirstRequest && <Results textResponse={textResponse} />}
         {!textResponse && (
           <Intro>
             <P>
@@ -168,21 +119,10 @@ export const HomePage = () => {
               <br /> Search for an album to get started
               <br />
             </P>
-            <AsyncSelect
-              isClearable
-              loadOptions={loadSuggestions}
-              cacheOptions
-              placeholder="Search..."
-              styles={customStyles}
-              onChange={(option: any) => {
-                if (option) {
-                  const match = albums.find((a) => a.id === option.value);
-                  if (match) {
-                    setSelectedAlbum(match);
-                  }
-                }
-              }}
-              components={{ LoadingIndicator: Loader }}
+            <AlbumSelect
+              albums={albums}
+              setSelectedAlbum={setSelectedAlbum}
+              setAlbums={setAlbums}
             />
           </Intro>
         )}

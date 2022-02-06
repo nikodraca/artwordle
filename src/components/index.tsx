@@ -128,3 +128,4 @@ export const Credits = styled.a`
 
 export { Results } from './Results';
 export { Loader } from './Loader';
+export { AlbumSelect } from './AlbumSelect';
