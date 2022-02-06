@@ -72,7 +72,12 @@ export const getColor = (path: string) =>
   new Promise((resolve, reject) => {
     const smImage = new Image();
     smImage.onload = () => {
-      const result = colorThief.getColor(smImage, 1);
+      let result = null;
+      try {
+        result = colorThief.getColor(smImage, 1);
+      } catch (e) {
+        result = [217, 217, 217];
+      }
 
       resolve({ path, status: 'ok', result });
     };

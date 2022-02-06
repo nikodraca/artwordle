@@ -61,7 +61,7 @@ export const HomePage = () => {
           return ref.toDataURL();
         });
 
-        allUrls = [...allUrls, ...urls];
+        allUrls.push(...urls);
       }
 
       const x = await Promise.all(allUrls.map(getColor));
@@ -69,7 +69,11 @@ export const HomePage = () => {
         const [r, g, b] = result;
         return closestEmoji({ r, g, b });
       });
-      setRes(chunk(colors, GRID_SIZE));
+      const newRes = chunk(colors, GRID_SIZE);
+      // Transpose matrix 90deg clockwise
+      const rotatedRes = newRes.map((_, colIndex) => newRes.map((row) => row[colIndex]));
+
+      setRes(rotatedRes);
       setIsLoading(false);
 
       // Redraw becuase I can't figure out why the images don't split the first time around
