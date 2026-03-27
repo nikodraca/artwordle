@@ -1,6 +1,8 @@
-# wordle-artwork
+# artwordle
 
-Album artwork -> Wordle artwork
+Small app I built that turns album artwork from Spotify into a Wordle result graphic.
+
+Read more [here]([url](https://www.nikodraca.com/projects/14-artwordle))
 
 ## Available Scripts
 
