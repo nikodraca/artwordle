@@ -1,14 +1,18 @@
 # artwordle
 
-Small app I built that turns album artwork from Spotify into a Wordle result graphic.
+I really liked the Wordle emoji art and wanted to do something with it, had this idea to build an album artwork generator in the same style.
 
-Read more [here]([url](https://www.nikodraca.com/projects/14-artwordle))
+The process was pretty simple:
 
-## Available Scripts
+1. Break the image apart into `n` squares evenly
+2. For each square, find the average colour (this happened client-side)
+3. For each color, find the closes emoji square
+4. Reconstruct the artwork
 
-In the project directory, you can run:
+One really cool thing was playing with the n - as you added more squares you had better "resolution". Enhance!
 
-### `vercel dev`
+Read more [here](https://www.nikodraca.com/projects/14-artwordle)
 
-Runs the app in the development mode along with serverless function.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Getting Started
+
+Install dependencies and run `vercel dev`. You'll need a Spotify access token as well
